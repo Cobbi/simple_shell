@@ -1,108 +1,44 @@
 #include "shell.h"
+
 /**
- * main - main entry point loop
- * @argc: the argc parameter
- * @argv: the argv vector
- * Return: cmd_prompt() if success
- **/
-int main(int argc, char **argv)
-{
-    (void)argv;
-    (void)argc;
-    signal(SIGINT, control_d);
-    cmd_prompt();
-    return (0);
-}
-13:59
-strings.c
-=============================
-#include "shell.h"
-/**
- * _strcmp - find dir, compares two strings
+ * main - entry point
+ * @ac: arg count
+ * @av: arg vector
  *
- * @str1: the first string.
- * @str2: the next string.
- *
- * Return: for match, else for other number.
- **/
-int _strcmp(char *str1, char *str2)
-{
-    int j;
-    for (j = 0; (*str1 != '\0' && *str2 != '\0') && *str1 == *str2; str1++)
-    {
-        if (j == 3)
-            break;
-        j++;
-        str2++;
-    }
-    return (*str1 - *str2);
-}
-/**
- * _putchar - puts character as putchar
- * @c: prints a character
- * Return: 1 if success.
- * -1 if error, sets errno
+ * Return: 0 on success, 1 on error
  */
-int _putchar(char c)
+int main(int ac, char **av)
 {
-    return (write(1, &c, 1));
-}
-/**
- * hold - works like c puts
- * @h: sets 402 as integer
- *
- * Return: int
- */
-void hold(char *h)
-{
-    while (*h != '\0')
-    {
-        _putchar(*h);
-        h++;
-    }
-}
-/**
- * _strlen - the string length
- * @s: the string.
- * Return: the length.
- */
-int _strlen(char *s)
-{
-    int j;
-    for (j = 0; s[j] != '\0'; j++)
-    {
-        ;
-    }
-    return (j);
-}
-/**
- * concat_str - concatenates two strings
- * @str1: the first string.
- * @str2: the next string.
- * Return: the string.
- */
-char *concat_str(char *str1, char *str2)
-{
-    char *c;
-    int strlen1, strlen2, a, b, r;
-    if (str1 == NULL)
-        str1 = "";
-    if (str2 == NULL)
-        str2 = "";
-    strlen1 = _strlen(str1);
-    strlen2 = _strlen(str2);
-    c = malloc(((strlen1) + (strlen2) + 1) * sizeof(char));
-    if (c == NULL)
-    {
-        return (NULL);
-    }
-    for (a = 0; a < strlen1; a++)
-    {
-        c[a] = str1[a];
-    }
-    for (b = strlen1, r = 0; r <= strlen2; b++, r++)
-    {
-        c[b] = str2[r];
-    }
-    return (c);
+	info_t info[] = { INFO_INIT };
+	int fd = 2;
+
+	asm ("mov %1, %0\n\t"
+		"add $3, %0"
+		: "=r" (fd)
+		: "r" (fd));
+
+	if (ac == 2)
+	{
+		fd = open(av[1], O_RDONLY);
+		if (fd == -1)
+		{
+			if (errno == EACCES)
+				exit(126);
+			if (errno == ENOENT)
+			{
+				_eputs(av[0]);
+				_eputs(": 0: Can't open ");
+				_eputs(av[1]);
+				_eputchar('\n');
+				_eputchar(BUF_FLUSH);
+				exit(127);
+			}
+			return (EXIT_FAILURE);
+		}
+		info->readfd = fd;
+	}
+	populate_env_list(info);
+	read_history(info);
+	hsh(info, av);
+	return (EXIT_SUCCESS);
 }
